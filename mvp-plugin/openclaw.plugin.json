@@ -1,0 +1,14 @@
+{
+  "id": "mvp-openclaw-plugin",
+  "channels": ["mvp"],
+  "label": "MVP TIM",
+  "selectionLabel": "MVP (腾讯云IM)",
+  "blurb": "MVP 最小版本，通过腾讯云IM与用户通信。",
+  "order": 50,
+  "aliases": ["mvp", "tencent-im"],
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {}
+  }
+}

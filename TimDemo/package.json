@@ -1,0 +1,12 @@
+{
+  "name": "tim-demo",
+  "version": "1.0.0",
+  "description": "腾讯TIM最小Demo",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx http-server -p 8000"
+  },
+  "dependencies": {
+    "@tencentcloud/chat": "^3.3.5"
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "name": "@weviva/mvp-openclaw-plugin",
+  "version": "1.0.0",
+  "description": "MVP OpenClaw channel plugin via Tencent IM (TIM)",
+  "keywords": [
+    "bot",
+    "channel",
+    "openclaw",
+    "mvp",
+    "tencent-im",
+    "tim"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "files": [
+    "dist/**/*.js",
+    "openclaw.plugin.json"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "type-check": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "zod": "^4.3.6"
+  },
+  "optionalDependencies": {
+    "@tencentcloud/chat": "^3.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.0",
+    "typescript": "^5.3.0"
+  },
+  "peerDependencies": {
+    "openclaw": ">=2026.2.13"
+  },
+  "openclaw": {
+    "extensions": [
+      "./dist/index.js"
+    ],
+    "channels": [
+      "mvp"
+    ],
+    "installDependencies": true,
+    "channel": {
+      "id": "mvp",
+      "label": "MVP TIM",
+      "selectionLabel": "MVP (腾讯云IM)",
+      "blurb": "MVP 最小版本，通过腾讯云IM与用户通信。",
+      "order": 50,
+      "aliases": [
+        "mvp",
+        "tencent-im"
+      ]
+    },
+    "install": {
+      "localPath": ".",
+      "defaultChoice": "local"
+    }
+  }
+}
