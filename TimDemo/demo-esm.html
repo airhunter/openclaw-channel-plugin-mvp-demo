@@ -3,158 +3,316 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>腾讯TIM最小Demo (ES模块版本)</title>
+    <title>腾讯TIM AI对话 Demo</title>
+    <!-- 引入 marked.js 用于 Markdown 渲染 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
+        :root {
+            --primary-color: #007bff;
+            --bg-color: #f4f7f6;
+            --chat-bg: #ffffff;
+            --msg-user-bg: #d1e7dd;
+            --msg-ai-bg: #f8f9fa;
+            --border-color: #e0e0e0;
+            --text-color: #333;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 50px auto;
-            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
-        .container {
-            border: 1px solid #ddd;
-            padding: 20px;
-            border-radius: 5px;
+
+        /* 顶部配置区 */
+        .header {
+            background-color: var(--chat-bg);
+            padding: 15px 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            z-index: 10;
         }
-        .section {
-            margin-bottom: 20px;
-            padding: 15px;
-            border: 1px solid #eee;
-            border-radius: 5px;
+
+        .header input {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
         }
-        .section h3 {
-            margin-top: 0;
-            color: #333;
+
+        .header input:focus {
+            border-color: var(--primary-color);
         }
-        input, button {
-            padding: 8px;
-            margin: 5px;
-            border-radius: 4px;
-            border: 1px solid #ddd;
-        }
-        button {
-            background-color: #007bff;
+
+        .header button {
+            padding: 8px 16px;
+            background-color: var(--primary-color);
             color: white;
+            border: none;
+            border-radius: 6px;
             cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
         }
-        button:hover {
+
+        .header button:hover {
             background-color: #0056b3;
         }
-        button:disabled {
+
+        .header button:disabled {
             background-color: #ccc;
             cursor: not-allowed;
         }
-        #messageList {
-            height: 300px;
-            overflow-y: auto;
-            border: 1px solid #eee;
-            padding: 10px;
-            background-color: #f9f9f9;
-        }
-        .message {
-            margin: 10px 0;
-            padding: 10px;
-            background-color: white;
-            border-radius: 5px;
-        }
-        .message.sent {
-            background-color: #e3f2fd;
-            margin-left: 20%;
-        }
-        .message.received {
-            background-color: #f5f5f5;
-            margin-right: 20%;
-        }
-        .status {
-            color: #666;
+
+        .status-badge {
             font-size: 12px;
-        }
-        .error {
-            color: red;
+            padding: 4px 8px;
+            border-radius: 12px;
             background-color: #ffebee;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 10px;
+            color: #c62828;
         }
-        .success {
-            color: green;
+        .status-badge.success {
             background-color: #e8f5e9;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 10px;
+            color: #2e7d32;
+        }
+
+        /* 聊天区域 */
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 1000px;
+            margin: 0 auto;
+            width: 100%;
+            background-color: var(--chat-bg);
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message-wrapper {
+            display: flex;
+            flex-direction: column;
+            max-width: 80%;
+        }
+
+        .message-wrapper.sent {
+            align-self: flex-end;
+            align-items: flex-end;
+        }
+
+        .message-wrapper.received {
+            align-self: flex-start;
+            align-items: flex-start;
+        }
+
+        .message-sender {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 4px;
+            margin-left: 4px;
+            margin-right: 4px;
+        }
+
+        .message-bubble {
+            padding: 12px 16px;
+            border-radius: 12px;
+            line-height: 1.5;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .message-wrapper.sent .message-bubble {
+            background-color: var(--msg-user-bg);
+            border-bottom-right-radius: 4px;
+        }
+
+        .message-wrapper.received .message-bubble {
+            background-color: var(--msg-ai-bg);
+            border: 1px solid var(--border-color);
+            border-bottom-left-radius: 4px;
+        }
+
+        /* Markdown 渲染样式 */
+        .markdown-body p { margin-bottom: 8px; }
+        .markdown-body p:last-child { margin-bottom: 0; }
+        .markdown-body code {
+            background-color: rgba(0,0,0,0.05);
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+        .markdown-body pre {
+            background-color: #2d2d2d;
+            color: #ccc;
+            padding: 12px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin-top: 8px;
+            margin-bottom: 8px;
+        }
+        .markdown-body pre code {
+            background-color: transparent;
+            color: inherit;
+            padding: 0;
+        }
+        .markdown-body ul, .markdown-body ol {
+            padding-left: 20px;
+            margin-bottom: 8px;
+        }
+
+        /* 底部输入区 */
+        .chat-input-area {
+            padding: 15px 20px;
+            border-top: 1px solid var(--border-color);
+            background-color: var(--chat-bg);
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input-area textarea {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            resize: none;
+            height: 50px;
+            font-family: inherit;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .chat-input-area textarea:focus {
+            border-color: var(--primary-color);
+        }
+
+        .chat-input-area button {
+            padding: 0 24px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+
+        .chat-input-area button:hover {
+            background-color: #0056b3;
+        }
+
+        .chat-input-area button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .hint {
+            font-size: 12px;
+            color: #888;
+            text-align: center;
+            padding-bottom: 10px;
+            background-color: var(--chat-bg);
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>腾讯TIM最小Demo (ES模块版本)</h1>
+    <!-- 顶部配置和登录区 -->
+    <div class="header">
+        <strong>⚙️ 配置</strong>
+        <input type="number" id="sdkAppID" placeholder="SDKAppID" value="123456789" style="width: 100px;">
+        <input type="text" id="userID" placeholder="登录用户ID" value="user1" style="width: 100px;">
+        <input type="text" id="userSig" placeholder="UserSig" value="" style="width: 150px;">
+        <button onclick="login()" id="loginBtn" disabled>连接</button>
+        <button onclick="logout()" id="logoutBtn" disabled style="background-color: #dc3545;">断开</button>
         
-        <!-- SDK加载状态 -->
-        <div id="sdkStatus" class="status">SDK加载中...</div>
+        <span style="margin-left: 20px;">🤖 <strong>目标Bot：</strong></span>
+        <input type="text" id="toUserID" placeholder="接收者Bot ID" value="openclaw_bot" style="width: 120px;">
         
-        <!-- 登录部分 -->
-        <div class="section">
-            <h3>1. 登录</h3>
-            <input type="number" id="sdkAppID" placeholder="SDKAppID" value="123456789">
-            <input type="text" id="userID" placeholder="用户ID" value="user1">
-            <input type="text" id="userSig" placeholder="UserSig" value="">
-            <button onclick="login()" id="loginBtn" disabled>登录</button>
-            <button onclick="logout()" id="logoutBtn" disabled>退出</button>
-            <div class="status" id="loginStatus">未登录</div>
-        </div>
-        
-        <!-- 发送消息部分 -->
-        <div class="section">
-            <h3>2. 发送消息</h3>
-            <input type="text" id="toUserID" placeholder="接收者用户ID" value="user2">
-            <input type="text" id="messageContent" placeholder="消息内容" value="Hello World!">
-            <button onclick="sendMessage()" id="sendBtn" disabled>发送消息</button>
-        </div>
-        
-        <!-- 消息列表 -->
-        <div class="section">
-            <h3>3. 消息列表</h3>
-            <div id="messageList"></div>
-        </div>
+        <span id="sdkStatus" class="status-badge" style="margin-left: auto;">SDK加载中...</span>
+        <span id="loginStatus" class="status-badge">未登录</span>
     </div>
 
-    <!-- 使用ES模块 -->
+    <!-- 聊天主界面 -->
+    <div class="chat-container">
+        <div class="chat-messages" id="messageList">
+            <!-- 消息会在这里动态生成 -->
+            <div style="text-align: center; color: #aaa; margin-top: 20px;">欢迎使用，请先在上方填写配置并连接。</div>
+        </div>
+        
+        <div class="chat-input-area">
+            <textarea id="messageContent" placeholder="输入消息... (Enter 发送，Shift+Enter 换行)" disabled></textarea>
+            <button onclick="sendMessage()" id="sendBtn" disabled>发送</button>
+        </div>
+        <div class="hint">按 Enter 键快捷发送</div>
+    </div>
+
     <script type="module">
         let tim = null;
         let currentUser = null;
 
+        // 初始化 marked 设置（例如：允许换行被解析为 <br>）
+        if (typeof marked !== 'undefined') {
+            marked.setOptions({
+                breaks: true,
+                gfm: true
+            });
+        }
+
+        // 绑定 Enter 键发送
+        const messageInput = document.getElementById('messageContent');
+        messageInput.addEventListener('keydown', function(e) {
+            // 如果按下 Enter 且没有按住 Shift 键
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault(); // 阻止默认换行行为
+                sendMessage();
+            }
+        });
+
         // 动态导入SDK
         try {
             const module = await import('https://cdn.jsdelivr.net/npm/@tencentcloud/chat@3.3.5/index.es.js');
-            console.log('导入的模块:', module);
-            
-            // 检查导出的内容
             if (module.default) {
                 window.TencentCloudChat = module.default;
             } else if (module.TencentCloudChat) {
                 window.TencentCloudChat = module.TencentCloudChat;
             } else {
-                // 尝试直接使用整个模块
                 window.TencentCloudChat = module;
             }
             
-            console.log('TencentCloudChat:', window.TencentCloudChat);
-            
-            // 更新SDK加载状态
-            document.getElementById('sdkStatus').innerHTML = '<span class="success">✓ SDK加载成功</span>';
+            const sdkStatusBadge = document.getElementById('sdkStatus');
+            sdkStatusBadge.textContent = 'SDK就绪';
+            sdkStatusBadge.className = 'status-badge success';
             document.getElementById('loginBtn').disabled = false;
-            console.log('腾讯云IM SDK加载成功');
             
-            // 初始化其他函数
             initFunctions();
         } catch (error) {
             console.error('SDK加载失败:', error);
-            document.getElementById('sdkStatus').innerHTML = '<span class="error">✗ SDK加载失败: ' + error.message + '</span>';
+            const sdkStatusBadge = document.getElementById('sdkStatus');
+            sdkStatusBadge.textContent = 'SDK加载失败';
         }
 
-        // 初始化函数
         function initFunctions() {
-            // 登录函数
             window.login = async function() {
                 const SDKAppID = parseInt(document.getElementById('sdkAppID').value);
                 const userID = document.getElementById('userID').value;
@@ -166,132 +324,124 @@
                 }
 
                 try {
-                    // 初始化SDK
-                    tim = TencentCloudChat.create({
-                        SDKAppID: SDKAppID
-                    });
-
-                    // 监听SDK事件
-                    tim.on(TencentCloudChat.EVENT.SDK_READY, onSDKReady);
+                    tim = TencentCloudChat.create({ SDKAppID: SDKAppID });
+                    tim.on(TencentCloudChat.EVENT.SDK_READY, () => console.log('SDK_READY'));
                     tim.on(TencentCloudChat.EVENT.MESSAGE_RECEIVED, onMessageReceived);
-                    tim.on(TencentCloudChat.EVENT.ERROR, onError);
+                    tim.on(TencentCloudChat.EVENT.ERROR, (e) => console.error('SDK_ERROR', e));
 
-                    // 登录
-                    const loginRes = await tim.login({
-                        userID: userID,
-                        userSig: userSig
-                    });
+                    await tim.login({ userID: userID, userSig: userSig });
 
-                    console.log('登录成功:', loginRes);
-                    document.getElementById('loginStatus').textContent = `已登录: ${userID}`;
-                    document.getElementById('loginStatus').style.color = 'green';
+                    const loginBadge = document.getElementById('loginStatus');
+                    loginBadge.textContent = `已连接: ${userID}`;
+                    loginBadge.className = 'status-badge success';
                     currentUser = userID;
                     
-                    // 启用按钮
+                    document.getElementById('loginBtn').disabled = true;
                     document.getElementById('logoutBtn').disabled = false;
                     document.getElementById('sendBtn').disabled = false;
+                    document.getElementById('messageContent').disabled = false;
                     
-                    alert('登录成功！');
+                    document.getElementById('messageList').innerHTML = ''; // 清空欢迎语
                 } catch (error) {
-                    console.error('登录失败:', error);
-                    document.getElementById('loginStatus').textContent = '登录失败: ' + error.message;
-                    document.getElementById('loginStatus').style.color = 'red';
                     alert('登录失败: ' + error.message);
                 }
             };
 
-            // 退出登录
             window.logout = async function() {
                 if (tim) {
                     try {
                         await tim.logout();
-                        document.getElementById('loginStatus').textContent = '未登录';
-                        document.getElementById('loginStatus').style.color = '#666';
+                        const loginBadge = document.getElementById('loginStatus');
+                        loginBadge.textContent = '未登录';
+                        loginBadge.className = 'status-badge';
                         currentUser = null;
                         
-                        // 禁用按钮
+                        document.getElementById('loginBtn').disabled = false;
                         document.getElementById('logoutBtn').disabled = true;
                         document.getElementById('sendBtn').disabled = true;
-                        
-                        alert('退出成功！');
+                        document.getElementById('messageContent').disabled = true;
                     } catch (error) {
-                        console.error('退出失败:', error);
                         alert('退出失败: ' + error.message);
                     }
                 }
             };
 
-            // 发送消息
             window.sendMessage = async function() {
-                if (!tim || !currentUser) {
-                    alert('请先登录');
-                    return;
-                }
+                if (!tim || !currentUser) return;
 
                 const toUserID = document.getElementById('toUserID').value;
-                const content = document.getElementById('messageContent').value;
+                const contentInput = document.getElementById('messageContent');
+                const content = contentInput.value.trim();
 
-                if (!toUserID || !content) {
-                    alert('请填写接收者和消息内容');
-                    return;
-                }
+                if (!toUserID || !content) return;
 
                 try {
-                    // 创建文本消息
                     const message = tim.createTextMessage({
                         to: toUserID,
                         conversationType: TencentCloudChat.TYPES.CONV_C2C,
-                        payload: {
-                            text: content
-                        }
+                        payload: { text: content }
                     });
 
-                    // 发送消息
                     const sendRes = await tim.sendMessage(message);
-                    console.log('发送成功:', sendRes);
-                    displayMessage(sendRes.data.message, 'sent');
+                    
+                    // 显示自己发送的消息（普通文本，不渲染Markdown）
+                    displayMessage({
+                        from: currentUser,
+                        text: content,
+                        time: Math.floor(Date.now() / 1000)
+                    }, 'sent');
+                    
+                    // 清空输入框并聚焦
+                    contentInput.value = '';
+                    contentInput.focus();
                 } catch (error) {
-                    console.error('发送失败:', error);
                     alert('发送失败: ' + error.message);
                 }
             };
         }
 
-        // SDK准备就绪
-        function onSDKReady(event) {
-            console.log('SDK准备就绪:', event);
-        }
-
-        // 接收消息
         function onMessageReceived(event) {
-            console.log('收到消息:', event);
             const messages = event.data;
             messages.forEach(message => {
-                displayMessage(message, 'received');
+                if (message.type === TencentCloudChat.TYPES.MSG_TEXT) {
+                    displayMessage({
+                        from: message.from,
+                        text: message.payload.text,
+                        time: message.time
+                    }, 'received');
+                }
             });
         }
 
-        // 错误处理
-        function onError(event) {
-            console.error('SDK错误:', event);
-            document.getElementById('sdkStatus').innerHTML = '<span class="error">SDK错误: ' + event.data.message + '</span>';
-        }
-
-        // 显示消息
-        function displayMessage(message, type) {
+        function displayMessage(msgData, type) {
             const messageList = document.getElementById('messageList');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${type}`;
+            const wrapper = document.createElement('div');
+            wrapper.className = `message-wrapper ${type}`;
             
-            const time = new Date(message.time * 1000).toLocaleString();
-            const content = message.type === TencentCloudChat.TYPES.MSG_TEXT ? message.payload.text : message.type;
+            const timeStr = new Date(msgData.time * 1000).toLocaleTimeString();
             
-            messageDiv.innerHTML = `
-                <strong>${message.from}</strong> <span style="color: #999; font-size: 12px;">${time}</span><br>
-                ${content}
-            `;
+            // 构建发送者信息行
+            const senderDiv = document.createElement('div');
+            senderDiv.className = 'message-sender';
+            senderDiv.textContent = `${msgData.from} • ${timeStr}`;
             
-            messageList.appendChild(messageDiv);
+            // 构建消息气泡
+            const bubbleDiv = document.createElement('div');
+            bubbleDiv.className = 'message-bubble markdown-body';
+            
+            // 自己发的消息纯文本显示，接收到的消息用 Markdown 渲染
+            if (type === 'received' && typeof marked !== 'undefined') {
+                bubbleDiv.innerHTML = marked.parse(msgData.text);
+            } else {
+                // 将纯文本的换行转换为 <br> 以便在 HTML 中显示
+                bubbleDiv.innerHTML = msgData.text.replace(/\n/g, '<br>');
+            }
+            
+            wrapper.appendChild(senderDiv);
+            wrapper.appendChild(bubbleDiv);
+            messageList.appendChild(wrapper);
+            
+            // 自动滚动到底部
             messageList.scrollTop = messageList.scrollHeight;
         }
     </script>
